@@ -1,13 +1,43 @@
-import React from 'react'
+import React, { useCallback, useContext } from "react";
 import styled from 'styled-components'
 import Octicon from 'react-octicon'
+import { getGistForUser } from "../services/gistService";
+import { LoadinContext, MyContext } from "../MyContext";
+
+
 
 const Search = () => {
+  const { setData } = useContext(MyContext);
+  const { load, setLoad } = useContext(LoadinContext);
+
+  const handleChanges = (val) => {
+    if (val === "") return;
+    setLoad(!load)
+    getGistForUser(val).then((gist) => {
+      setData(gist.data)
+      setLoad(!load)
+    })
+  };
+
+  function debounce(cb, delay = 1000) {
+    let timeout;
+    return (...args) => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => {
+        cb(...args);
+      }, delay);
+    };
+  }
+
+  const optimizedFn = useCallback(debounce(handleChanges), []);
+
   return (
     <Wrapper>
       <InputBox>
-      <Octicon name="search" />
-      <Input placeholder="Search Gists for the username"/>
+        <Octicon name="search" />
+        <Input placeholder="Search Gists for the username"
+          onChange={(e) => optimizedFn(e.target.value)}
+        />
       </InputBox>
     </Wrapper>
   )
@@ -34,7 +64,7 @@ const Input = styled.input`
   font-size: 16px;
 
   &:focus{
-    outline: 0;
+    outline: none;
   }
 `;
 
